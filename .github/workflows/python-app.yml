@@ -1,4 +1,4 @@
-name: Build EXE
+name: Build Complete EXE
 
 on:
   push:
@@ -35,22 +35,22 @@ jobs:
           tar -xf ffmpeg.zip -C ffmpeg --strip-components=1
           echo "FFmpeg ready in ffmpeg/bin"
 
-      # 5️⃣ Criar EXE com PyInstaller
+      # 5️⃣ Criar EXE com PyInstaller incluindo Gradio e FFmpeg
       - name: Build EXE
         run: |
           pyinstaller --onefile ^
           --add-data "ffmpeg/bin;ffmpeg/bin" ^
-          --add-data "${{ env.PYTHONPATH }}\Lib\site-packages\gradio;gradio" ^
-          --add-data "${{ env.PYTHONPATH }}\Lib\site-packages\gradio_client;gradio_client" ^
+          --add-data "C:/Users/runneradmin/AppData/Roaming/Python/Python311/site-packages/gradio;gradio" ^
+          --add-data "C:/Users/runneradmin/AppData/Roaming/Python/Python311/site-packages/gradio_client;gradio_client" ^
           main.py
 
-      # 6️⃣ Listar arquivos gerados
+      # 6️⃣ Listar arquivos gerados (opcional)
       - name: List files
         run: dir dist
 
       # 7️⃣ Upload do EXE como artifact
       - name: Upload EXE
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: audio_evolucao_exe
           path: dist/main.exe
