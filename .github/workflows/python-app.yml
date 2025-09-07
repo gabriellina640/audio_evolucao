@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Pegar o código do repositório
+      # 1️⃣ Pegar o código do GitHub
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -31,17 +31,12 @@ jobs:
       - name: Download FFmpeg
         run: |
           curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
-          # Criar pasta mesmo que já exista
-          powershell -Command "New-Item -ItemType Directory -Force -Path ffmpeg"
-          tar -xf ffmpeg.zip -C ffmpeg --strip-components=1
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg
           echo "FFmpeg ready in ffmpeg/bin"
 
-      # 5️⃣ Criar EXE com PyInstaller
+      # 5️⃣ Criar EXE com PyInstaller (uma linha, compatível com PowerShell)
       - name: Build EXE
-        run: |
-          pyinstaller --onefile ^
-          --add-data "ffmpeg/bin;ffmpeg/bin" ^
-          main.py
+        run: pyinstaller --onefile --add-data "ffmpeg/bin;ffmpeg/bin" main.py
 
       # 6️⃣ Listar arquivos gerados (opcional)
       - name: List files
