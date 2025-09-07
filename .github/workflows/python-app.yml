@@ -1,8 +1,6 @@
 name: Build Complete EXE
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -10,21 +8,20 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Baixar o repositório
+      # 1️⃣ Fazer checkout do repositório
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       # 2️⃣ Configurar Python
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: 3.11
 
       # 3️⃣ Instalar dependências
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install pyinstaller
 
       # 4️⃣ Baixar e preparar o FFmpeg
@@ -32,21 +29,15 @@ jobs:
         run: |
           curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
           tar -xf ffmpeg.zip
+          if (Test-Path ffmpeg) { Remove-Item -Recurse -Force ffmpeg }
           $folder = Get-ChildItem -Directory | Where-Object { $_.Name -like "ffmpeg-*" }
           Rename-Item -Path $folder.FullName -NewName ffmpeg
 
-      # 5️⃣ Criar o EXE com PyInstaller
+      # 5️⃣ Gerar o EXE com PyInstaller
       - name: Build EXE
-        run: |
-          pyinstaller --onefile --noconsole `
-          --add-data "ffmpeg/bin;ffmpeg/bin" `
-          main.py
+        run: pyinstaller --onefile --add-data "ffmpeg/bin;ffmpeg/bin" main.py
 
-      # 6️⃣ Listar arquivos gerados
-      - name: List files
-        run: dir dist
-
-      # 7️⃣ Fazer upload do EXE como artifact
+      # 6️⃣ Subir o EXE como artifact
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
