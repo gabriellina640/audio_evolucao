@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Pegar o código do GitHub
+      # 1️⃣ Pegar o código do repositório
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -18,7 +18,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.11'  # ou 3.13 se preferir
 
       # 3️⃣ Instalar dependências
       - name: Install dependencies
@@ -31,17 +31,16 @@ jobs:
       - name: Download FFmpeg
         run: |
           curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
-          mkdir ffmpeg
+          # Criar pasta mesmo que já exista
+          powershell -Command "New-Item -ItemType Directory -Force -Path ffmpeg"
           tar -xf ffmpeg.zip -C ffmpeg --strip-components=1
           echo "FFmpeg ready in ffmpeg/bin"
 
-      # 5️⃣ Criar EXE com PyInstaller incluindo Gradio e FFmpeg
+      # 5️⃣ Criar EXE com PyInstaller
       - name: Build EXE
         run: |
           pyinstaller --onefile ^
           --add-data "ffmpeg/bin;ffmpeg/bin" ^
-          --add-data "C:/Users/runneradmin/AppData/Roaming/Python/Python311/site-packages/gradio;gradio" ^
-          --add-data "C:/Users/runneradmin/AppData/Roaming/Python/Python311/site-packages/gradio_client;gradio_client" ^
           main.py
 
       # 6️⃣ Listar arquivos gerados (opcional)
