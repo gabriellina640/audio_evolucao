@@ -31,14 +31,19 @@ jobs:
       - name: Download FFmpeg
         run: |
           curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
+          # Remove qualquer pasta ffmpeg antiga
+          if (Test-Path ffmpeg) { Remove-Item -Recurse -Force ffmpeg }
+          # Extrair o zip
           Expand-Archive ffmpeg.zip
           # Renomear a pasta extraída para "ffmpeg"
-          Rename-Item -Path (Get-ChildItem -Directory | Where-Object { $_.Name -like "ffmpeg*" }) -NewName ffmpeg
+          $extracted = Get-ChildItem -Directory | Where-Object { $_.Name -like "ffmpeg*" }
+          Rename-Item -Path $extracted.FullName -NewName ffmpeg
           echo "FFmpeg ready in ffmpeg/bin"
 
       # 5️⃣ Criar EXE com PyInstaller
       - name: Build EXE
-        run: pyinstaller --onefile --add-data "ffmpeg/bin;ffmpeg/bin" main.py
+        run: |
+          pyinstaller --onefile --add-data "ffmpeg/bin;ffmpeg/bin" main.py
 
       # 6️⃣ Listar arquivos gerados (opcional)
       - name: List files
