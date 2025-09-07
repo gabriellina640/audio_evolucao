@@ -18,7 +18,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'  # ou 3.13 se preferir
+          python-version: '3.11'
 
       # 3️⃣ Instalar dependências
       - name: Install dependencies
@@ -31,10 +31,12 @@ jobs:
       - name: Download FFmpeg
         run: |
           curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
-          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg
+          Expand-Archive ffmpeg.zip
+          # Renomear a pasta extraída para "ffmpeg"
+          Rename-Item -Path (Get-ChildItem -Directory | Where-Object { $_.Name -like "ffmpeg*" }) -NewName ffmpeg
           echo "FFmpeg ready in ffmpeg/bin"
 
-      # 5️⃣ Criar EXE com PyInstaller (uma linha, compatível com PowerShell)
+      # 5️⃣ Criar EXE com PyInstaller
       - name: Build EXE
         run: pyinstaller --onefile --add-data "ffmpeg/bin;ffmpeg/bin" main.py
 
