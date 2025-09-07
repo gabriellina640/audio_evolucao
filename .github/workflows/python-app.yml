@@ -32,13 +32,14 @@ jobs:
         run: |
           curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
           tar -xf ffmpeg.zip
-          rename (Get-ChildItem -Directory | Where-Object { $_.Name -like "ffmpeg-*" }).Name ffmpeg
+          $folder = Get-ChildItem -Directory | Where-Object { $_.Name -like "ffmpeg-*" }
+          Rename-Item -Path $folder.FullName -NewName ffmpeg
 
       # 5️⃣ Criar o EXE com PyInstaller
       - name: Build EXE
         run: |
-          pyinstaller --onefile --noconsole ^
-          --add-data "ffmpeg/bin;ffmpeg/bin" ^
+          pyinstaller --onefile --noconsole `
+          --add-data "ffmpeg/bin;ffmpeg/bin" `
           main.py
 
       # 6️⃣ Listar arquivos gerados
