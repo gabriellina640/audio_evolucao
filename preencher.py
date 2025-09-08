@@ -1,9 +1,21 @@
 import openai
 import os
+from dotenv import load_dotenv
 
+# ----------------------------
 # Carrega chave da variável de ambiente
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# ----------------------------
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
 
+if not api_key:
+    raise ValueError("❌ OPENAI_API_KEY não encontrada. Verifique seu arquivo .env ou variável de ambiente.")
+
+openai.api_key = api_key
+
+# ----------------------------
+# Modelo de evolução padrão
+# ----------------------------
 MODELO_ESTRUTURA = """
 Preencha o seguinte modelo de evolução padrão com as informações do áudio transcrito:
 
@@ -40,13 +52,21 @@ Exames Complementares (se citados):
 Conduta / Plano:
 """
 
+# ----------------------------
+# Função para preencher evolução
+# ----------------------------
 def preencher_evolucao(texto_transcrito):
     """
-    Recebe o texto transcrito e retorna a evolução preenchida
+    Recebe o texto transcrito e retorna a evolução preenchida usando o modelo GPT.
     """
-    prompt = f"Transcrevi o seguinte áudio:\n\n{texto_transcrito}\n\nPreencha o modelo de evolução padrão:\n{MODELO_ESTRUTURA}"
-    resposta = openai.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return resposta.choices[0].message.content
+    try:
+        prompt = f"Transcrevi o seguinte áudio:\n\n{texto_transcrito}\n\nPreencha o modelo de evolução padrão:\n{MODELO_ESTRUTURA}"
+        
+        resposta = openai.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        return resposta.choices[0].message.content
+    except Exception as e:
+        return f"❌ Erro ao preencher evolução: {str(e)}"
