@@ -5,6 +5,14 @@ from transcrever import transcrever_audio
 from preencher import preencher_evolucao
 from pydub import AudioSegment
 import os
+from dotenv import load_dotenv
+import openai  # adicionei esta importação
+
+# ----------------------------
+# Carrega a variável OPENAI_API_KEY do .env
+# ----------------------------
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ----------------------------
 # Configuração do FFmpeg dentro do projeto
