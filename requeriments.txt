@@ -1,3 +1,4 @@
 gradio
 soundfile
 pydub
+python-dotenv
