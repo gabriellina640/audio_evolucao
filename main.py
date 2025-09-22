@@ -7,7 +7,8 @@ from pydub import AudioSegment
 import os
 from dotenv import load_dotenv
 import openai
-from pydub.utils import which  # para localizar ffmpeg/ffprobe no sistema
+from pydub.utils import which
+import platform
 
 # ----------------------------
 # Carrega a variável OPENAI_API_KEY do .env
@@ -16,10 +17,16 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ----------------------------
-# Configuração do FFmpeg no Ubuntu (usa o instalado no sistema)
+# Configuração do FFmpeg
 # ----------------------------
-AudioSegment.converter = which("ffmpeg")
-AudioSegment.ffprobe = which("ffprobe")
+if platform.system() == "Windows":
+    # Se estiver em Windows, usa o FFmpeg que você tem no projeto
+    AudioSegment.converter = os.path.join("ffmpeg", "bin", "ffmpeg.exe")
+    AudioSegment.ffprobe = os.path.join("ffmpeg", "bin", "ffprobe.exe")
+else:
+    # Se estiver em Linux/Hugging Face, usa o FFmpeg que já está no sistema
+    AudioSegment.converter = which("ffmpeg")
+    AudioSegment.ffprobe = which("ffprobe")
 
 print("Usando FFmpeg em:", AudioSegment.converter)
 print("Usando FFprobe em:", AudioSegment.ffprobe)
@@ -33,14 +40,14 @@ def processar_audio(arquivo_audio):
     """
     if arquivo_audio is None:
         return "⚠️ Nenhum áudio foi recebido. Grave ou envie novamente."
-
+    
     sr, data = arquivo_audio
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
         sf.write(temp_wav.name, data, sr)
         temp_path = temp_wav.name
-
+        
     print("DEBUG - arquivo temporário salvo em:", temp_path)
-
+    
     try:
         texto = transcrever_audio(temp_path)
         evolucao = preencher_evolucao(texto)
