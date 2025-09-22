@@ -1,26 +1,24 @@
-import openai
-import os
-from dotenv import load_dotenv
+from openai import OpenAI
 
-# Carrega a variável OPENAI_API_KEY do .env
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-
-if not api_key:
-    raise ValueError("❌ OPENAI_API_KEY não encontrada. Verifique seu arquivo .env ou variável de ambiente.")
-
-openai.api_key = api_key
-
-def transcrever_audio(arquivo_audio):
+def transcrever_audio(client: OpenAI, arquivo_audio: str) -> str:
     """
-    Transcreve um arquivo de áudio usando Whisper (OpenAI)
+    Transcreve um ficheiro de áudio usando o modelo Whisper da OpenAI.
+
+    Args:
+        client: O cliente da API OpenAI já inicializado.
+        arquivo_audio: O caminho para o ficheiro de áudio a ser transcrito.
+
+    Returns:
+        O texto transcrito.
     """
     try:
-        with open(arquivo_audio, "rb") as f:
-            resultado = openai.audio.transcriptions.create(
-                model="whisper-1",
-                file=f
+        with open(arquivo_audio, "rb") as audio_file:
+            transcription = client.audio.transcriptions.create(
+              model="whisper-1",
+              file=audio_file
             )
-        return resultado.text
+        return transcription.text
     except Exception as e:
-        return f"❌ Erro ao transcrever áudio: {str(e)}"
+        print(f"ERRO na transcrição: {e}")
+        # Lança a exceção para que a função principal a possa tratar
+        raise e

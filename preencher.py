@@ -1,24 +1,9 @@
-import openai
-import os
-from dotenv import load_dotenv
-
-# ----------------------------
-# Carrega chave da variável de ambiente
-# ----------------------------
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-
-if not api_key:
-    raise ValueError("❌ OPENAI_API_KEY não encontrada. Verifique seu arquivo .env ou variável de ambiente.")
-
-openai.api_key = api_key
+from openai import OpenAI
 
 # ----------------------------
 # Modelo de evolução padrão
 # ----------------------------
 MODELO_ESTRUTURA = """
-Preencha o seguinte modelo de evolução padrão com as informações do áudio transcrito:
-
 🔹 Estrutura da Evolução Padrão
 
 Identificação do Paciente:
@@ -55,18 +40,27 @@ Conduta / Plano:
 # ----------------------------
 # Função para preencher evolução
 # ----------------------------
-def preencher_evolucao(texto_transcrito):
+def preencher_evolucao(client: OpenAI, texto_transcrito: str) -> str:
     """
     Recebe o texto transcrito e retorna a evolução preenchida usando o modelo GPT.
+
+    Args:
+        client: O cliente da API OpenAI já inicializado.
+        texto_transcrito: O texto do áudio já transcrito.
+
+    Returns:
+        O modelo de evolução preenchido.
     """
     try:
-        prompt = f"Transcrevi o seguinte áudio:\n\n{texto_transcrito}\n\nPreencha o modelo de evolução padrão:\n{MODELO_ESTRUTURA}"
-        
-        resposta = openai.chat.completions.create(
+        prompt = f"Com base no seguinte áudio transcrito de um profissional de saúde, preencha o modelo de evolução médica de forma clara e objetiva.\n\nÁudio Transcrito:\n--- \n{texto_transcrito}\n---\n\n{MODELO_ESTRUTURA}"
+
+        resposta = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}]
         )
-        
+
         return resposta.choices[0].message.content
     except Exception as e:
-        return f"❌ Erro ao preencher evolução: {str(e)}"
+        print(f"ERRO ao preencher evolução: {e}")
+        # Lança a exceção para que a função principal a possa tratar
+        raise e

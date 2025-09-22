@@ -1,76 +1,87 @@
 import gradio as gr
 import tempfile
 import soundfile as sf
+import os
+import platform
+from openai import OpenAI
+from pydub import AudioSegment
+from pydub.utils import which
+
+# Funções importadas dos nossos módulos
 from transcrever import transcrever_audio
 from preencher import preencher_evolucao
-from pydub import AudioSegment
-import os
-from dotenv import load_dotenv
-import openai
-from pydub.utils import which
-import platform
 
 # ----------------------------
-# Carrega a variável OPENAI_API_KEY do .env
-# ----------------------------
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# ----------------------------
-# Configuração do FFmpeg
+# Configuração do FFmpeg para portabilidade (Windows/Linux)
 # ----------------------------
 if platform.system() == "Windows":
-    # Se estiver em Windows, usa o FFmpeg que você tem no projeto
+    print("Sistema Windows detectado. Usando FFmpeg local.")
     AudioSegment.converter = os.path.join("ffmpeg", "bin", "ffmpeg.exe")
     AudioSegment.ffprobe = os.path.join("ffmpeg", "bin", "ffprobe.exe")
 else:
-    # Se estiver em Linux/Hugging Face, usa o FFmpeg que já está no sistema
-    AudioSegment.converter = which("ffmpeg")
-    AudioSegment.ffprobe = which("ffprobe")
-
-print("Usando FFmpeg em:", AudioSegment.converter)
-print("Usando FFprobe em:", AudioSegment.ffprobe)
+    converter_path = which("ffmpeg")
+    if not converter_path:
+        print("AVISO CRÍTICO: FFmpeg não foi encontrado no sistema.")
+        print("Se estiver no Hugging Face, certifique-se de que o ficheiro 'packages.txt' existe e contém 'ffmpeg'.")
 
 # ----------------------------
-# Função principal de processamento de áudio
+# Inicialização Centralizada do Cliente OpenAI
+# ----------------------------
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("Ficheiro .env carregado para desenvolvimento local.")
+except ImportError:
+    print("dotenv não instalado. No servidor, as chaves virão dos Secrets.")
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# ----------------------------
+# Função principal que orquestra o fluxo de trabalho
 # ----------------------------
 def processar_audio(arquivo_audio):
-    """
-    Recebe áudio (numpy), salva em arquivo temporário, transcreve e preenche a evolução
-    """
     if arquivo_audio is None:
         return "⚠️ Nenhum áudio foi recebido. Grave ou envie novamente."
     
     sr, data = arquivo_audio
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
-        sf.write(temp_wav.name, data, sr)
-        temp_path = temp_wav.name
-        
-    print("DEBUG - arquivo temporário salvo em:", temp_path)
-    
+    temp_path = None
     try:
-        texto = transcrever_audio(temp_path)
-        evolucao = preencher_evolucao(texto)
-        return evolucao
+        # Salva o áudio recebido num ficheiro temporário
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav:
+            sf.write(temp_wav.name, data, sr)
+            temp_path = temp_wav.name
+        
+        # Etapa 1: Transcrever o áudio
+        print("Iniciando transcrição...")
+        texto_transcrito = transcrever_audio(client, temp_path)
+        print("Transcrição concluída.")
+        
+        # Etapa 2: Preencher a evolução com o texto
+        print("Iniciando preenchimento da evolução...")
+        evolucao_preenchida = preencher_evolucao(client, texto_transcrito)
+        print("Evolução preenchida.")
+        
+        return evolucao_preenchida
+        
     except Exception as e:
-        return f"❌ Erro ao processar áudio: {str(e)}"
+        print(f"ERRO no fluxo principal (app.py): {e}")
+        return f"❌ Ocorreu um erro ao processar o áudio. Verifique se a sua chave de API da OpenAI está configurada corretamente nos Secrets do Hugging Face e tente novamente."
+        
     finally:
-        if os.path.exists(temp_path):
+        # Garante que o ficheiro temporário seja sempre deletado
+        if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
 
 # ----------------------------
-# Interface Gradio
+# Interface Gráfica e Lançamento
 # ----------------------------
 interface = gr.Interface(
     fn=processar_audio,
     inputs=gr.Audio(sources=["upload", "microphone"], type="numpy", label="Envie ou grave um áudio"),
-    outputs=gr.Textbox(label="Evolução Preenchida", lines=25),
-    title="Transcrição e Evolução Médica",
-    description="Envie ou grave um áudio. O sistema transcreve e preenche automaticamente a evolução padrão."
+    outputs=gr.Textbox(label="Evolução Preenchida", lines=25, show_copy_button=True),
+    title="Assistente de Evolução Médica",
+    description="Envie ou grave um áudio com o relato do paciente. O sistema irá transcrever o áudio e preencher automaticamente um modelo de evolução médica padrão."
 )
 
-# ----------------------------
-# Launch
-# ----------------------------
 if __name__ == "__main__":
-    interface.launch(share=False)
+    interface.launch()

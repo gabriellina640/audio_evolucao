@@ -1,5 +1,5 @@
-gradio
-soundfile
-pydub
-python-dotenv
-openai
+gradio>=4.0.0
+soundfile>=0.12.0
+pydub>=0.25.0
+python-dotenv>=1.0.0
+openai>=1.0.0
