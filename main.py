@@ -6,7 +6,8 @@ from preencher import preencher_evolucao
 from pydub import AudioSegment
 import os
 from dotenv import load_dotenv
-import openai  # adicionei esta importação
+import openai
+from pydub.utils import which  # para localizar ffmpeg/ffprobe no sistema
 
 # ----------------------------
 # Carrega a variável OPENAI_API_KEY do .env
@@ -15,13 +16,10 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ----------------------------
-# Configuração do FFmpeg dentro do projeto
+# Configuração do FFmpeg no Ubuntu (usa o instalado no sistema)
 # ----------------------------
-base_path = os.path.join(os.path.dirname(__file__), "ffmpeg", "bin")
-os.environ["PATH"] = base_path + os.pathsep + os.environ.get("PATH", "")
-
-AudioSegment.converter = os.path.join(base_path, "ffmpeg.exe")
-AudioSegment.ffprobe = os.path.join(base_path, "ffprobe.exe")
+AudioSegment.converter = which("ffmpeg")
+AudioSegment.ffprobe = which("ffprobe")
 
 print("Usando FFmpeg em:", AudioSegment.converter)
 print("Usando FFprobe em:", AudioSegment.ffprobe)
