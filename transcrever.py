@@ -22,3 +22,4 @@ def transcrever_audio(client: OpenAI, arquivo_audio: str) -> str:
         print(f"ERRO na transcrição: {e}")
         # Lança a exceção para que a função principal a possa tratar
         raise e
+
