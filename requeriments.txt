@@ -1,4 +1,6 @@
 gradio
+tempfile
 soundfile
 pydub
 python-dotenv
+openai
